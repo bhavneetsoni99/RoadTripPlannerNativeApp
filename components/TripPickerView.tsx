@@ -1,25 +1,55 @@
-import * as React from 'react';
-import { Picker} from 'react-native';
+import * as React from "react";
+import { Picker } from "react-native";
+import { connect } from "react-redux";
+import {toPairs} from "lodash";
+import { Dispatch } from "../Util";
+import {TripPurpose} from "../constants";
+import {
+  mapDispatchToSetTripPurpose,
+  RootState,
+  selectPurposeOfTrip
+} from "../reducers/tripPicker";
 
-interface State {
-  typeOfTrip: string;
+interface Props {
+  setPurpose: (purposeOfTrip: string) => void;
+  purposeOfTrip: string;
 }
 
-export default class App extends React.Component<{}, State> {
+const mapDispatchToProps = (dispatch: Dispatch) => ({
+  setPurpose: (purpose: string) =>
+    mapDispatchToSetTripPurpose(dispatch)(purpose)
+});
 
-    render() {
-        return (<Picker
-          selectedValue={this.state.typeOfTrip}
-          style={{ height: 50, width: 320, margin: 15, }}
-          prompt={'Primary purpose of the trip'}
-          mode={'dropdown'}
-          onValueChange={(itemValue, itemIndex) => this.setState({ typeOfTrip: itemValue })}>
-          <Picker.Item label="Business" value="business" />
-          <Picker.Item label="Leisure" value="avoidHighways" />
-          <Picker.Item label="Get Me Their Quickest" value="fast" />
-          <Picker.Item label="Avoid Tolls" value="noTolls" />
-          <Picker.Item label="Lets Explore" value="siteseing" />
-        </Picker>
-        )
-    }
+const mapStateToProps = (rootState: RootState) => ({
+  purposeOfTrip: selectPurposeOfTrip(rootState)
+});
+
+class TripPickerView extends React.Component<Props> {
+  constructor(props: Props){
+    super(props)
+  }
+
+  public render() {
+    const tripTypes = toPairs(TripPurpose);
+    const pickerItems = tripTypes.map((trip, i) => 
+        <Picker.Item label={trip[0]} value={trip[1]} key={i} />)
+    return (
+      <Picker
+        selectedValue={this.props.purposeOfTrip}
+        style={{ height: 50, width: 320, margin: 15 }}
+        prompt={"Primary purpose of the trip"}
+        mode={"dialog"}
+        onValueChange={(itemValue, itemIndex) =>
+          this.props.setPurpose(itemValue)
+        }
+      >
+        {pickerItems}
+      </Picker>
+    );
+  }
 }
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(TripPickerView);
