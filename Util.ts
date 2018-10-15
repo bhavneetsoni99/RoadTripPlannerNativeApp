@@ -1,3 +1,5 @@
+import { PermissionsAndroid } from "react-native";
+
 export interface AnyRootState {
     [key: string]: any;
   }
@@ -45,4 +47,23 @@ export interface AnyRootState {
   
   export interface Dispatch {
     <P>(action: Action<P>): Action<P>;
+  }
+
+  export async function checkPermissionToGetLocation() {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: "Road Trip Planner App",
+          message: "Road Trip Planner app needs access to your location "
+        }
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log("You can use the location");
+      } else {
+        alert("Location permission denied, cant proceed");
+      }
+    } catch (err) {
+      console.warn(err);
+    }
   }

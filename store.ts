@@ -5,11 +5,16 @@ import {
   RootState as TripRootState,
   reducer as tripReducer,
 } from './reducers/tripPicker';
+import {
+  RootState as PositionsRootState,
+  reducer as locationsReducer,
+} from './reducers/locations';
 
-interface RootState extends TripRootState {}
+export interface RootState extends TripRootState, PositionsRootState { }
 
 const rootReducer = combineReducers<RootState>({
   Trip: tripReducer,
+  Locations: locationsReducer,
 });
 
 const store = createStore<RootState>(rootReducer, composeWithDevTools());

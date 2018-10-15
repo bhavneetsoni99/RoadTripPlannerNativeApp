@@ -1,58 +1,79 @@
 {
-    "extends": [
-      "tslint-react-recommended"
+  "extends": [
+    "tslint-config-airbnb",
+    "tslint-react",
+    "tslint-config-prettier",
+    "tslint-plugin-prettier",
+    "tslint-react-recommended"
+  ],
+  "rules": {
+    "no-any": false,
+    "prettier": [
+      false,
+      {
+        "printWidth": 90,
+        "singleQuote": true,
+        "trailingComma": "all"
+      }
     ],
-    "rules": {
-      "ordered-imports": [
-        true
-      ],
-      "quotemark": [
-        true,
-        "single",
-        "jsx-single",
-        "avoid-escape"
-      ],
-      "semicolon": [
-        true,
-        "never"
-      ],
-      "member-access": [
-        false
-      ],
-      "member-ordering": [
-        false
-      ],
-      "trailing-comma": [
-        true,
-        {
-          "singleline": "never",
-          "multiline": "always"
-        }
-      ],
-      "no-empty": false,
-      "no-submodule-imports": false,
-      "no-implicit-dependencies": false,
-      "no-constant-condition": false,
-      "triple-equals": [
-        true,
-        "allow-undefined-check"
-      ],
-      "ter-indent": [
-        true,
-        2,
-        {
-          "SwitchCase": 1
-        }
-      ],
-      "no-duplicate-imports": false,
-      "jsx-alignment": true,
-      "jsx-no-bind": true,
-      "jsx-no-lambda": true,
-      "max-classes-per-file": [
-        false,
-      ],
-      "no-unused-variable": [true, {
+    "variable-name": [
+      true,
+      "check-format",
+      "allow-pascal-case"
+    ],
+    "ordered-imports": [
+      true
+    ],
+    "quotemark": [
+      true,
+      "single",
+      "jsx-single",
+      "avoid-escape"
+    ],
+    "semicolon": [
+      true,
+      "never"
+    ],
+    "member-ordering": [
+      false
+    ],
+    "trailing-comma": [
+      true,
+      {
+        "singleline": "never",
+        "multiline": "always"
+      }
+    ],
+    "no-empty": false,
+    "no-submodule-imports": false,
+    "no-implicit-dependencies": false,
+    "no-constant-condition": false,
+    "no-unused-variable": [
+      false,
+      "check-parameters",
+      {
         "ignore-pattern": "AutoCompleteAddress"
-      }]
-    }
+      }
+    ],
+    "member-access": true,
+    "triple-equals": [
+      true,
+      "allow-undefined-check"
+    ],
+    "ter-indent": [
+      true,
+      2,
+      {
+        "SwitchCase": 1
+      },
+    ],
+    "no-duplicate-imports": false,
+    "jsx-alignment": true,
+    "jsx-no-bind": true,
+    "jsx-no-lambda": true,
+    "max-classes-per-file": false,
+  },
+  "jsRules": {
+    "no-eval": true
   }
+}
