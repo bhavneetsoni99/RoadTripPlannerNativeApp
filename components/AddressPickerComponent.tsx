@@ -37,7 +37,7 @@ const mapStateToProps = (rootState: RootState) => ({
 });
 
 class AddressPicker extends React.Component<Props, State> {
-    pickUpInput: any;// React.RefObject<{}>;
+    pickUpInput: React.RefObject<{}>;
     constructor(props: Props) {
         super(props);
         this.pickUpInput = React.createRef();
@@ -123,20 +123,7 @@ class AddressPicker extends React.Component<Props, State> {
                         <Text style={styles.buttonText}>{destination ? destination.address : 'Please select a destination'}</Text>
                     </TouchableOpacity>
                 </View>
-                {this.state.showInput && <View>
-                    {/* <View style={styles.inputWrapper}>
-                        <TextInput
-                            ref={input => this.pickUpInput = input}
-                            style={styles.input}
-                            value={this.state.addressQuery}
-                            onChangeText={this.onQueryChange}
-                            placeholder={'Where to'}
-                            placeholderTextColor='#9BABB4'
-                            underlineColorAndroid={'transparent'}
-                            autoFocus
-                        />
-                    </View> */}
-
+                {this.state.showInput &&
                     <View style={styles.list}>
                         <FlatList
                             data={this.state.predictions}
@@ -145,8 +132,7 @@ class AddressPicker extends React.Component<Props, State> {
                             showsVerticalScrollIndicator={false}
                             contentContainerStyle={{ flexGrow: 1 }}
                         />
-                    </View>
-                </View>}
+                    </View>}
             </View>
         );
     }

@@ -3,6 +3,5 @@ export enum TripPurpose {
   Leisure = "avoidHighways",
   "Get Me Their Quickest" = "fast",
   "Avoid Tolls" = "noTolls",
-  "Lets Explore" = "siteseing",
-  forEach = "forEach"
+  "Lets Explore" = "siteseing"
 }
