@@ -15,10 +15,10 @@ import { connect } from 'react-redux';
 import { Dispatch } from '../Util';
 import { RootState } from '../store';
 
-import { Position, mapDispatchToSetDestination, selectLocation, Coordinates } from '../reducers/locations';
+import { Position, mapDispatchToSetDestination, selectLocation, Coordinates, mapDispatchToSetWatch } from '../reducers/locations';
 
 interface Props {
-    setDestination: (destination: Position) => void;
+    setWatchPosition: (watch: boolean) => void;
     destination: Coordinates | null;
 };
 interface State {
@@ -28,15 +28,15 @@ interface State {
 }
 
 const mapDispatchToProps = (dispatch: Dispatch) => ({
-    setDestination: (destination: Position) =>
-        mapDispatchToSetDestination(dispatch)(destination)
+    setWatchPosition: (watch: boolean) =>
+        mapDispatchToSetWatch(dispatch)(watch)
 });
 
 const mapStateToProps = (rootState: RootState) => ({
     destination: selectLocation(rootState, 'destination')
 });
 
-class AddressPicker extends React.Component<Props, State> {
+class ModifyButtons extends React.Component<Props, State> {
     pickUpInput: React.RefObject<{}>;
     constructor(props: Props) {
         super(props);
@@ -48,64 +48,12 @@ class AddressPicker extends React.Component<Props, State> {
         };
     }
 
-    onShowInputPress = () => {
-        console.log('show input');
-        this.setState({ showInput: true });
-    }
-
-    onOpenPickerPress = () => {
-        console.log('picker');
-        RNGooglePlaces.openPlacePickerModal()
-            .then((place) => {
-                console.log(place);
-            })
-            .catch(error => console.log(error.message));
-    }
-
-    openSearchModal = () => {
-        RNGooglePlaces.openAutocompleteModal({
-            type: 'address',
-            country: 'US',
-        })
-            .then((place) => {
-                const destination = {
-                    coords: {
-                        latitude: place.latitude,
-                        longitude: place.longitude,
-                        address: place.address,
-                    }
-                }
-                this.props.setDestination(destination);
-                console.log(place);
-            })
-            .catch(error => console.log(error.message));
-    }
-
-    onQueryChange = (text) => {
-        this.setState({ addressQuery: text });
-        RNGooglePlaces.getAutocompletePredictions(this.state.addressQuery, {
-            country: 'US'
-        })
-            .then((places) => {
-                console.log(places);
-                this.setState({ predictions: places });
-            })
-            .catch(error => console.log(error.message));
-    }
-
-    keyExtractor = item => item.placeID;
-
     render() {
-        const { destination } = this.props;
+        const { setWatchPosition } = this.props;
         return (
-            <View style={{
-                borderWidth: 1, borderLeftWidth: 6,
-                borderLeftColor: 'black', backgroundColor: "white",
-                borderRadius: 5, borderColor: 'black', opacity: 0.5,
-                height: 50
-            }}>
-                <TouchableOpacity style={styles.button} onPress={this.openSearchModal}>
-                    <Text style={styles.buttonText}>{destination ? destination.address : 'Please select a destination'}</Text>
+            <View style={styles.container}>
+                <TouchableOpacity style={styles.button} onPress={() => setWatchPosition(true)}>
+                    <Text style={styles.buttonText}>Start</Text>
                 </TouchableOpacity>
             </View>
         );
@@ -114,17 +62,21 @@ class AddressPicker extends React.Component<Props, State> {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        backgroundColor: 'transparent',
         padding: 12,
+        flexDirection: 'row',
+        alignContent: 'space-between',
     },
     button: {
-        //backgroundColor: 'transparent',
+        backgroundColor: 'green',
         flexDirection: 'row',
-        height: 45,
+        width: 60,
+        height: 30,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 10,
+        borderRadius: 5,
+        borderColor: "black",
+        borderWidth: 1
     },
     buttonText: {
         color: 'black'
@@ -196,4 +148,4 @@ const styles = StyleSheet.create({
 });
 
 export default connect(mapStateToProps,
-    mapDispatchToProps)(AddressPicker);
+    mapDispatchToProps)(ModifyButtons);

@@ -9,57 +9,56 @@ import { checkPermissionToGetLocation, Dispatch } from "../Util";
 import { mapDispatchToSetTripPurpose, RootState as TripState, selectPurposeOfTrip } from "../reducers/tripPicker";
 import {
   Position, Coordinates,
-  mapDispatchToSetInititalPosition, State as LocationState, selectLocation, mapDispatchToSetCurrentPosition, mapDispatchToSetDestination
+  mapDispatchToSetInititalPosition, State as LocationState, selectLocation, mapDispatchToSetCurrentPosition, mapDispatchToSetDestination, watchingPosition, mapDispatchToSetMainRoute, selectRoutes
 } from "../reducers/locations";
 
 import key from '../key';
 
-// import {DirectionsRequest, DirectionsService} from 'googlemaps';
 const WINDOW = Dimensions.get('window');
 const styles = StyleSheet.create({
   container: {
-    marginTop: 40,
-    height: (WINDOW.height - 150),
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+    height: (WINDOW.height),
     width: WINDOW.width,
     justifyContent: "flex-end",
     alignItems: "center"
   },
   map: {
-    ...StyleSheet.absoluteFillObject
+    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
   }
 });
-
+// initialPosition: Coordinates | null;
+// currentPosition: Coordinates | null;
+// destination: Coordinates | null;
+// isWatching: boolean;
+// mainRoute: any | null;
 interface State extends LocationState {
   coords: any | null;
   promptForMultidayTrip: boolean;
+  midPoints: Coordinates[] | null;
 }
 
 interface Props {
   purposeOfTrip: string;
-  setInitialPosition: (position: Position) => void;
-  setCurrentPosition: (position: Position) => void;
-  setDestination: (position: Position) => void;
-  initialPosition: Coordinates;
-  currentPosition: Coordinates;
   destination: Coordinates;
 }
 
 const mapDispatchToProps = (dispatch: Dispatch) => ({
-  setInitialPosition: (position: Position) =>
-    mapDispatchToSetInititalPosition(dispatch)(position),
-  setCurrentPosition: (position: Position) =>
-    mapDispatchToSetCurrentPosition(dispatch)(position),
-  setDestination: (position: Position) =>
-    mapDispatchToSetDestination(dispatch)(position)
 });
 
 const mapStateToProps = (rootState: RootState) => ({
   purposeOfTrip: selectPurposeOfTrip(rootState),
-  initialPosition: selectLocation(rootState, 'starting'),
-  currentPosition: selectLocation(rootState, 'current'),
-  destination: selectLocation(rootState, 'destination')
+  destination: selectLocation(rootState, 'destination'),
 });
-
 
 class MapComponent extends React.Component<Props, State> {
   map: React.RefObject<MapView>;
@@ -72,27 +71,33 @@ class MapComponent extends React.Component<Props, State> {
     this.initMarker = React.createRef();
     this.destMarker = React.createRef();
     this.state = {
+      initialPosition: null,
+      currentPosition: null,
+      promptForMultidayTrip: false,
       coords: null,
-      promptForMultidayTrip: false
+      isWatching: false,
+      mainRoute: null,
+      midPoints: null
     }
   }
   public watchID;
 
   public render() {
-    const { initialPosition, currentPosition, destination } = this.props;
+    const { destination } = this.props;
+    const { initialPosition, currentPosition } = this.state;
     return (initialPosition &&
       <View style={styles.container}>
         <MapView
           ref={this.map}
           style={styles.map}
-          showsPointsOfInterest={true}
+          showsPointsOfInterest={this.state.isWatching}
           showsCompass={true}
-          showsTraffic={false}
+          showsTraffic={this.state.isWatching}
           rotateEnabled={true}
           loadingEnabled={true}
           region={{
-            latitude: initialPosition.latitude,
-            longitude: initialPosition.longitude,
+            latitude: currentPosition.latitude,
+            longitude: currentPosition.longitude,
             latitudeDelta: 0.015,
             longitudeDelta: 0.0121
           }}
@@ -111,18 +116,30 @@ class MapComponent extends React.Component<Props, State> {
         <Modal
           animationType="slide"
           hardwareAccelerated={true}
-          transparent={false}
+          transparent={true}
           visible={this.state.promptForMultidayTrip}
           onRequestClose={() => {
             Alert.alert('Modal has been closed.');
           }}>
-          <View style={{ marginTop: 22 }}>
-            <View>
-              <Text>Do you want to make it a Multi day Trip</Text>
-
+          <View style={{
+            marginTop: 250, marginHorizontal: 30,
+            borderColor: 'black',
+            borderRadius: 5,
+            borderWidth: 1,
+            backgroundColor: 'white', height: 100
+          }}>
+            <Text style={{
+              fontSize: 20, backgroundColor: 'green',
+              borderBottomWidth: 1
+            }}>Travel Time is more than 6 hours, do you want to make it a Multi day Trip</Text>
+            <View style={{ marginTop: 10, display: 'flex', flexDirection: 'row', justifyContent: 'space-around' }}>
               <TouchableHighlight
-                onPress={() => this.setMultidayModalVisibility(!this.state.promptForMultidayTrip)}>
-                <Text>Yes</Text>
+                onPress={() => this.setMultidayModalVisibility(!this.state.promptForMultidayTrip, false)}>
+                <Text style={{ marginHorizontal: 100, fontSize: 20 }}>No</Text>
+              </TouchableHighlight>
+              <TouchableHighlight
+                onPress={() => this.setMultidayModalVisibility(!this.state.promptForMultidayTrip, true)}>
+                <Text style={{ marginHorizontal: 100, fontSize: 20 }}>Yes</Text>
               </TouchableHighlight>
             </View>
           </View>
@@ -135,16 +152,18 @@ class MapComponent extends React.Component<Props, State> {
   }
   public componentDidMount() {
     const successMethod = (position: Position) => {
-      this.props.setInitialPosition(position);
-      this.props.setCurrentPosition(position);
+      this.setState({
+        initialPosition: position.coords,
+        currentPosition: position.coords
+      })
     };
     const errorMethod = (error) => { alert(error) };
     navigator.geolocation.getCurrentPosition(
       successMethod, errorMethod,
       { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
     );
-    this.watchID = navigator.geolocation.watchPosition((position: any) => {
-      this.props.setCurrentPosition(position);
+    this.watchID = navigator.geolocation.watchPosition((position: Position) => {
+      this.setState({ currentPosition: position.coords });
     });
   }
   componentDidUpdate(prevProps, prevState) {
@@ -164,7 +183,8 @@ class MapComponent extends React.Component<Props, State> {
     this.map.current.fitToSuppliedMarkers(members.map(m => m.id), true);
   }
   getURL() {
-    const { initialPosition, destination } = this.props;
+    const { destination } = this.props;
+    const { initialPosition } = this.state;
     const startLoc = `${initialPosition.latitude},${initialPosition.longitude}`;
     const destinationLoc = `${destination.latitude},${destination.longitude}`;
     let avoid = '';
@@ -208,10 +228,23 @@ class MapComponent extends React.Component<Props, State> {
         longitude: point[1]
       }
     })
-    this.setState({ coords: coords })
+    this.setState({ coords: coords, mainRoute: respJson.routes[0] })
   }
-  setMultidayModalVisibility(visible) {
+  setMultidayModalVisibility(visible: boolean, splitTrip?: boolean) {
     this.setState({ promptForMultidayTrip: visible });
+    splitTrip !== undefined && splitTrip && this.findReaasonableHalfwaySpot();
+  }
+  findReaasonableHalfwaySpot() {
+    const { mainRoute } = this.state;
+    const routeLeg = mainRoute.legs[0]
+    const totalDrivingTime = routeLeg.duration.value;
+    const timeFormidwayPoint = totalDrivingTime / 2;
+    let drivingTime = 0, stepIndex = 0
+    while (drivingTime < timeFormidwayPoint) {
+      drivingTime = routeLeg.steps[stepIndex].duration.value
+      stepIndex++
+    }
+    console.log(routeLeg.steps[stepIndex].end_location);
   }
 }
 
