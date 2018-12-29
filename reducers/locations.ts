@@ -1,11 +1,11 @@
 import { createAction, createReducer, Dispatch, reduceReducers } from "../Util";
 
 export interface Coordinates {
+  latitude: number;
+  longitude: number;
   accuracy?: number;
   altitude?: number;
   heading?: number;
-  latitude: number;
-  longitude: number;
   speed?: number;
   address?: string;
 }

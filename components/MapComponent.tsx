@@ -6,10 +6,9 @@ import Polyline from "@mapbox/polyline";
 import { RootState } from '../store';
 import { isEqual } from 'lodash';
 import { checkPermissionToGetLocation, Dispatch } from "../Util";
-import { mapDispatchToSetTripPurpose, RootState as TripState, selectPurposeOfTrip } from "../reducers/tripPicker";
+import { selectPurposeOfTrip } from "../reducers/tripPicker";
 import {
-  Position, Coordinates,
-  mapDispatchToSetInititalPosition, State as LocationState, selectLocation, mapDispatchToSetCurrentPosition, mapDispatchToSetDestination, watchingPosition, mapDispatchToSetMainRoute, selectRoutes
+  Position, Coordinates, State as LocationState, selectLocation, mapDispatchToSetDestination
 } from "../reducers/locations";
 
 import key from '../key';
@@ -38,21 +37,24 @@ const styles = StyleSheet.create({
 });
 // initialPosition: Coordinates | null;
 // currentPosition: Coordinates | null;
-// destination: Coordinates | null;
+// destination?: Coordinates | null;
 // isWatching: boolean;
 // mainRoute: any | null;
 interface State extends LocationState {
   coords: any | null;
   promptForMultidayTrip: boolean;
-  midPoints: Coordinates[] | null;
+  midPoints: Coordinates[];
 }
 
 interface Props {
   purposeOfTrip: string;
   destination: Coordinates;
+  setDestination: (destination: Position) => void
 }
 
 const mapDispatchToProps = (dispatch: Dispatch) => ({
+  setDestination: (destination: Position) =>
+    mapDispatchToSetDestination(dispatch)(destination)
 });
 
 const mapStateToProps = (rootState: RootState) => ({
@@ -77,14 +79,14 @@ class MapComponent extends React.Component<Props, State> {
       coords: null,
       isWatching: false,
       mainRoute: null,
-      midPoints: null
+      midPoints: []
     }
   }
   public watchID;
 
   public render() {
-    const { destination } = this.props;
-    const { initialPosition, currentPosition } = this.state;
+    const { destination, setDestination } = this.props;
+    const { initialPosition, currentPosition, midPoints } = this.state;
     return (initialPosition &&
       <View style={styles.container}>
         <MapView
@@ -106,8 +108,9 @@ class MapComponent extends React.Component<Props, State> {
             title={"Home"}
             ref={this.initMarker} />
           {destination && <Marker draggable coordinate={destination}
-            onDragEnd={(e) => this.setState({ destination: e.coordinate })}
+            onDragEnd={(e) => setDestination({ coords: e.coordinate })}
             ref={this.destMarker} />}
+          {midPoints.map((midPoint, i) => <Marker draggable key={key} coordinate={midPoint} />)}
           {this.state.coords && <PlolylineComp
             coordinates={this.state.coords}
             strokeWidth={2}
@@ -169,7 +172,7 @@ class MapComponent extends React.Component<Props, State> {
   componentDidUpdate(prevProps, prevState) {
     const previousDestination = prevProps.destination;
     const previousPurposeOfTrip = prevProps.purposeOfTrip;
-    const { destination, purposeOfTrip } = this.props;
+    const { purposeOfTrip, destination } = this.props;
     this.destMarker.current && this.fitToMarkersToMap();
     if (
       !isEqual(destination, previousDestination) || !isEqual(purposeOfTrip, previousPurposeOfTrip)) {
@@ -183,8 +186,8 @@ class MapComponent extends React.Component<Props, State> {
     this.map.current.fitToSuppliedMarkers(members.map(m => m.id), true);
   }
   getURL() {
-    const { destination } = this.props;
     const { initialPosition } = this.state;
+    const { destination } = this.props;
     const startLoc = `${initialPosition.latitude},${initialPosition.longitude}`;
     const destinationLoc = `${destination.latitude},${destination.longitude}`;
     let avoid = '';
@@ -235,7 +238,7 @@ class MapComponent extends React.Component<Props, State> {
     splitTrip !== undefined && splitTrip && this.findReaasonableHalfwaySpot();
   }
   findReaasonableHalfwaySpot() {
-    const { mainRoute } = this.state;
+    const { mainRoute, midPoints } = this.state;
     const routeLeg = mainRoute.legs[0]
     const totalDrivingTime = routeLeg.duration.value;
     const timeFormidwayPoint = totalDrivingTime / 2;
@@ -244,7 +247,12 @@ class MapComponent extends React.Component<Props, State> {
       drivingTime = routeLeg.steps[stepIndex].duration.value
       stepIndex++
     }
-    console.log(routeLeg.steps[stepIndex].end_location);
+    const point = routeLeg.steps[stepIndex].end_location
+    midPoints.unshift({
+      latitude: point.lat,
+      longitude: point.lng
+    });
+    this.setState({ midPoints });
   }
 }
 
